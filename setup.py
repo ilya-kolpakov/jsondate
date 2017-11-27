@@ -8,11 +8,13 @@ def test_suite():
 
 setuptools.setup(
     name='jsondate',
-    version='0.1.2',
-    url='https://github.com/rconradharris/jsondate',
+    version='0.1.3',
+    url='https://github.com/ilya-kolpakov/jsondate',
     license='MIT',
     author='Rick Harris',
     author_email='rconradharris@gmail.com',
+    maintainer = 'Ilya Kolpakov',
+    maintainer_email = 'ilya.kolpakov@gmail.com'
     description='JSON with datetime support',
     long_description=__doc__,
     packages=setuptools.find_packages(),
