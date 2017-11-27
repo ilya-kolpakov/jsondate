@@ -1,66 +1,76 @@
 import datetime
 import json
 import unittest
-import StringIO
+import six
 
 import jsondate
 
 
-class JSONDateTests(unittest.TestCase):
-    def assertTypeAndValue(self, expected_type, expected_value, result):
-        self.assertIsInstance(result, expected_type)
-        self.assertEqual(expected_value, result)
+class RoundTripCases(object):
 
-    def test_dumps_empty_roundtrips(self):
-        self.assertEqual({}, jsondate.loads(jsondate.dumps({})))
+    def _test_roundtrip(self, input, expected=None, test_types=False):
+        output = self.roundtrip(input)
+        expected = expected if expected else input
+        self.assertEqual(output, expected)
+        return output
 
-    def test_dumps_str_roundtrips(self):
-        # Generates a ValueError from _datetime_object_hook
-        orig_dict = dict(foo='bar')
-        self.assertEqual(orig_dict, jsondate.loads(jsondate.dumps(orig_dict)))
+    def test_empty(self):
+        self._test_roundtrip({})
 
-    def test_dump_unicode_roundtrips(self):
-        orig_dict = {u'foo': u'bar', 'empty': u''}
+    def test_none(self):
+        self._test_roundtrip(dict(foo=None))
 
-        # json module broken: unicode objects, empty-string objects are str
-        result = json.loads(json.dumps(orig_dict))
-        self.assertTypeAndValue(unicode, u'bar', result[u'foo'])
-        self.assertTypeAndValue(str, '', result[u'empty'])
-
-        # jsondate fix: always return unicode objects
-        result = jsondate.loads(jsondate.dumps(orig_dict))
-        self.assertTypeAndValue(unicode, u'bar', result[u'foo'])
-        self.assertTypeAndValue(unicode, u'', result[u'empty'])
-
-    def test_dumps_none_roundtrips(self):
-        # Generates a TypeError from _datetime_object_hook
-        orig_dict = dict(foo=None)
-        self.assertEqual(orig_dict, jsondate.loads(jsondate.dumps(orig_dict)))
-
-    def test_dumps_datetime_roundtrips(self):
+    def test_datetime(self):
         orig_dict = dict(created_at=datetime.datetime(2011, 1, 1))
-        self.assertEqual(orig_dict, jsondate.loads(jsondate.dumps(orig_dict)))
+        self._test_roundtrip(orig_dict)
 
-    def test_dumps_date_roundtrips(self):
+    def test_date(self):
         orig_dict = dict(created_at=datetime.date(2011, 1, 1))
-        self.assertEqual(orig_dict, jsondate.loads(jsondate.dumps(orig_dict)))
+        self._test_roundtrip(orig_dict)
 
-    def test_dumps_datelike_string_does_not_roundtrip(self):
-        """A string that looks like a date *will* be interpreted as a date.
-
-        If for whatever reason, you don't want that to happen, you'll need to
-        do some pre or post-processing to fixup the results.
-        """
+    def test_datelike_string(self):
+        "A string that looks like a date *will* be interpreted as a date."
         orig_dict = dict(created_at='2011-01-01')
         expected = dict(created_at=datetime.date(2011, 1, 1))
-        self.assertEqual(expected, jsondate.loads(jsondate.dumps(orig_dict)))
+        self._test_roundtrip(orig_dict, expected)
 
-    def test_dump_datetime_roundtrips(self):
-        orig_dict = dict(created_at=datetime.date(2011, 1, 1))
-        fileobj = StringIO.StringIO()
-        jsondate.dump(orig_dict, fileobj)
+    @staticmethod
+    def _strdict(T):
+        return { T('foo'): T('bar'), T('empty'): T('') }
+
+    def _test_string_roundtrips(self, intype, outtype):
+        input = self._strdict(intype)
+        expected = self._strdict(six.text_type)
+        output = self._test_roundtrip(input, expected)
+        for k, v in six.iteritems(output):
+            self.assertEqual(type(k), outtype)
+            self.assertEqual(type(v), outtype)
+
+    def test_str_roundtrips(self):
+        self._test_string_roundtrips(str, six.text_type)
+
+    def test_unicode_roundtrips(self):
+        self._test_string_roundtrips(six.text_type, six.text_type) 
+
+
+class DumpsLoadsTests(RoundTripCases, unittest.TestCase):
+
+    @staticmethod
+    def roundtrip(input):
+        return jsondate.loads(jsondate.dumps(input))
+
+
+class DumpLoadTests(RoundTripCases, unittest.TestCase):
+
+    @staticmethod
+    def roundtrip(input):
+        fileobj = six.StringIO()
+        jsondate.dump(input, fileobj)
         fileobj.seek(0)
-        self.assertEqual(orig_dict, jsondate.load(fileobj))
+        return jsondate.load(fileobj)
+
+
+class UnexpectedTypeTests(unittest.TestCase):
 
     def test_unexpected_type_raises(self):
         dict_ = {'foo': set(['a'])}

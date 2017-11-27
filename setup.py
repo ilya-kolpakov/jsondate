@@ -19,7 +19,7 @@ setuptools.setup(
     zip_safe=False,
     include_package_data=True,
     platforms='any',
-    install_requires=[''],
+    install_requires=['six'],
     test_suite='setup.test_suite',
     classifiers=[
         'Environment :: Web Environment',
