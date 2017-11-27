@@ -1,4 +1,9 @@
 import setuptools
+import unittest
+
+
+def test_suite():
+    return unittest.TestLoader().discover('tests', pattern='test_*.py')
 
 
 setuptools.setup(
@@ -15,6 +20,7 @@ setuptools.setup(
     include_package_data=True,
     platforms='any',
     install_requires=[''],
+    test_suite='setup.test_suite',
     classifiers=[
         'Environment :: Web Environment',
         'Intended Audience :: Developers',
