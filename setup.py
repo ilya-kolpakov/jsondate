@@ -14,7 +14,7 @@ setuptools.setup(
     author='Rick Harris',
     author_email='rconradharris@gmail.com',
     maintainer = 'Ilya Kolpakov',
-    maintainer_email = 'ilya.kolpakov@gmail.com'
+    maintainer_email = 'ilya.kolpakov@gmail.com',
     description='JSON with datetime support',
     long_description=__doc__,
     packages=setuptools.find_packages(),
